@@ -12,4 +12,7 @@ module.exports = function(app) {
   app.route('/signUp')
     .post(setupController.registerUser);
 
+  // signIn Route
+  app.route('/signIn')
+     .post(setupController.signIn);
 };

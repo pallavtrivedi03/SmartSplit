@@ -1,11 +1,10 @@
 'use strict';
 
-
 var mongoose = require('mongoose'),
 jwt = require('jsonwebtoken'),
 User = mongoose.model('User');
 
-  exports.registerUser = function(req, res) {
+exports.registerUser = function(req, res) {
 
     //find if user already exists
     User.findOne({
@@ -37,11 +36,55 @@ User = mongoose.model('User');
                 message: 'Registered successfully',
                 token: token
               });
-
-
           }
 
         });
             }
           });
         };
+
+
+exports.signIn = function(req,res)
+{
+	let password = req.body.password;
+	let userName = req.body.name;
+	User.findOne({mobileNumber:req.body.mobileNumber}, function(err,doUserExists)
+	{
+	   if(err) return err;
+           
+   	   if(doUserExists)
+	   {
+		if(password == doUserExists.password && userName == doUserExists.name)
+		{
+		   var expirationTime = {'expiresIn': '3h'};
+		   console.log(doUserExists);
+		   let token = jwt.sign(doUserExists.toObject(), req.body.mobileNumber,expirationTime);
+		   console.log(token);
+		   res.json(
+		   {
+			success: true,
+                	message: 'SignIn Successful',
+                	token: token
+		   });
+		}
+		else
+		{
+		   res.json(
+		   {
+			success: false,
+                	message: 'Invalid credential'
+		   });
+		}
+ 	   }
+	   else
+	   {
+		res.json(
+		   {
+			success: false,
+                	message: 'User doesnt exists'
+		   });
+           }
+           
+	    
+	});
+}
