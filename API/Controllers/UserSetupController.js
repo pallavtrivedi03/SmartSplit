@@ -2,7 +2,8 @@
 
 var mongoose = require('mongoose'),
 jwt = require('jsonwebtoken'),
-User = mongoose.model('User');
+User = mongoose.model('User'),
+mailController = require('./mailController');
 
 exports.registerUser = function(req, res) {
 
@@ -30,6 +31,7 @@ exports.registerUser = function(req, res) {
               // create a token
               var expirationTime = {'expiresIn': '3h'};
               var token = jwt.sign(user.toObject(), req.body.mobileNumber,expirationTime);
+              mailController.registrationMail(user);
               // return the information including token as JSON
               res.json({
                 success: true,
@@ -37,12 +39,10 @@ exports.registerUser = function(req, res) {
                 token: token
               });
           }
-
-        });
-            }
-          });
-        };
-
+      });
+    }
+  });
+};
 
 exports.signIn = function(req,res)
 {
@@ -51,9 +51,9 @@ exports.signIn = function(req,res)
 	User.findOne({mobileNumber:req.body.mobileNumber}, function(err,doUserExists)
 	{
 	   if(err) return err;
-           
+
    	   if(doUserExists)
-	   {
+	      {
 		if(password == doUserExists.password && userName == doUserExists.name)
 		{
 		   var expirationTime = {'expiresIn': '3h'};
@@ -75,7 +75,7 @@ exports.signIn = function(req,res)
                 	message: 'Invalid credential'
 		   });
 		}
- 	   }
+  }
 	   else
 	   {
 		res.json(
@@ -84,7 +84,26 @@ exports.signIn = function(req,res)
                 	message: 'User doesnt exists'
 		   });
            }
-           
-	    
 	});
-}
+};
+
+// Route for forgot password
+exports.forgotPassword = function(req,res)
+{
+  User.findOne({mobileNumber: req.body.mobileNumber},function(err,doUserExists)
+    {
+      if(err) return err;
+
+      if(doUserExists)
+      {
+        mailController.forgotPassword(doUserExists);
+      }
+      else
+      {
+        res.json({
+          success:false,
+          message: "User is not registered"
+        })
+      }
+    });
+};

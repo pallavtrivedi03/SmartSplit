@@ -15,4 +15,7 @@ module.exports = function(app) {
   // signIn Route
   app.route('/signIn')
      .post(setupController.signIn);
+
+  app.route('/forgotPassword')
+     .post(setupController.forgotPassword)
 };
