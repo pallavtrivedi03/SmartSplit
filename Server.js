@@ -3,7 +3,11 @@ var app = express();
 var port = 3000;
 
 var mongoose = require('mongoose'),
+Bill = require('./API/Models/Bill'),
+Transaction = require('./API/Models/Transaction'),
 User = require('./API/Models/User'), //created model loading here
+
+
 bodyParser = require('body-parser');
 
 // mongoose instance connection url connection

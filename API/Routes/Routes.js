@@ -1,8 +1,10 @@
 'use strict';
+var express = require('express');
 
 module.exports = function(app) {
-  var setupController = require('../Controllers/UserSetupController');
-
+  var setupController = require('../Controllers/UserSetupController'),
+  transactionController = require('../Controllers/transactionController');
+  var apiRoutes =  express.Router();
 
   app.get('/',function(req,res){
     res.send('We are happy to see you using SmartSplit');
@@ -18,4 +20,9 @@ module.exports = function(app) {
 
   app.route('/forgotPassword')
      .post(setupController.forgotPassword)
+
+  // add a bill route
+  app.route('/addABill')
+    .post(transactionController.addABill)
+
 };
