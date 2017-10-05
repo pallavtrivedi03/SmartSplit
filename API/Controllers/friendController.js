@@ -13,24 +13,24 @@ module.exports.addAFriend = function(req,res)
 	{
 		if(err) return err;
 		if(isUserFriend)
-		{	
+		{
 		  var FriendSchema = Friend.FriendSchema;
 		  let userFriend = new FriendSchema();
 		  userFriend.friendName = isUserFriend.name;
 		  userFriend.friendEmail = isUserFriend.email;
 	          userFriend.friendNumber = isUserFriend.mobileNumber;
 		  console.log(userFriend);
-		
+
 		  User.update({mobileNumber:userNumber},
 			      { "$push": { "friends": userFriend } },
 			      { "new": true, "upsert": true },
-			      function (err, user) 		 
+			      function (err, user)
 		 {
 			if(err)	return err;
 			console.log('updated ',user);
 			var friend = new FriendSchema();
 			  User.findOne({mobileNumber:userNumber},function(err,userData)
-			  {		
+			  {
 				if(err) return err;
 		 		console.log("userData ",userData);
 				friend.friendName = userData.name;
@@ -38,7 +38,7 @@ module.exports.addAFriend = function(req,res)
 	                  	friend.friendNumber = userData.mobileNumber;
 				console.log(friend);
 		          User.update({mobileNumber:userFriend.friendNumber},{ "$push": { "friends": friend } },{ "new": true, "upsert": true },
-				function (err, user) 			 	
+				function (err, user)
 			 {
 				if(err)	return err;
 			        console.log('updated ',user);
@@ -47,6 +47,6 @@ module.exports.addAFriend = function(req,res)
 		  });
 		}
 	});
-	
-	
+
+
 };

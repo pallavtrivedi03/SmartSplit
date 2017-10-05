@@ -3,8 +3,14 @@ var app = express();
 var port = 3000;
 
 var mongoose = require('mongoose'),
+<<<<<<< HEAD
 Transaction = require('./API/Models/transaction'),
 User = require('./API/Models/user'), //created model loading here
+=======
+Bill = require('./API/Models/Bill'),
+Transaction = require('./API/Models/Transaction'),
+User = require('./API/Models/userModel'), //created model loading here
+>>>>>>> Merging Add Friend Api
 
 
 bodyParser = require('body-parser');

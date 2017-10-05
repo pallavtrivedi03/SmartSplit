@@ -110,3 +110,11 @@ exports.forgotPassword = function(req,res)
       }
     });
 };
+
+exports.getUsers = function(req,res)
+{
+  User.find({},function(err,data)
+{
+  console.log(data);
+});
+}
