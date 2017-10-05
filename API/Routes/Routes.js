@@ -3,7 +3,8 @@ var express = require('express');
 
 module.exports = function(app) {
   var setupController = require('../Controllers/UserSetupController'),
-  transactionController = require('../Controllers/transactionController');
+  friendController = require('../Controllers/friendController'),
+  transactionController = require('../Controllers/TransactionController');
   var apiRoutes =  express.Router();
 
   app.get('/',function(req,res){
@@ -19,10 +20,17 @@ module.exports = function(app) {
      .post(setupController.signIn);
 
   app.route('/forgotPassword')
-     .post(setupController.forgotPassword)
+     .post(setupController.forgotPassword);
 
   // add a bill route
   app.route('/addABill')
-    .post(transactionController.addABill)
+    .post(transactionController.addABill);
 
+  // add a bill route
+  app.route('/addAFriend')
+    .post(friendController.addAFriend);
+  
+  // add a bill route
+  app.route('/addABill')
+    .post(transactionController.addABill);
 };

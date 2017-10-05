@@ -16,6 +16,7 @@ var smtpTransport = nodemailer.createTransport({
 // For sending mail on successful registration
 module.exports.registrationMail = function(user)
 {
+  console.log(user);
   to = user.email;
   subject = 'Registration Successfully';
   text = "Hi "+ user.name+",\n You have successfully created an account";

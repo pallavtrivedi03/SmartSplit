@@ -1,60 +1,49 @@
 'use strict';
 
-var mongoose = require('mongoose'),
-jwt = require('jsonwebtoken'),
-User = mongoose.model('User'),
-Transaction = mongoose.model('Transaction'),
-Bill = mongoose.model('Bill');
+var mongoose = require('mongoose');
+var Transaction = require('../Models/transaction');
+var User = mongoose.model('User');
+var shortid = require('shortid');
 
 exports.addABill = function(req,res)
 {
-  let description = req.body.password;
-	let useramoutName = req.body.name;
-  let paidBy = req.body.name;
-  let splitEqually = req.body.name;
+  console.log(req.body);
+  var transactionId = shortid.generate();
+  console.log(transactionId);
+  var userNumber = req.body.userNumber;
+  var friendNumber = req.body.friendNumber;
+  var friendName = req.body.friendName;
+  var amount  = req.body.amount;
 
-  var token = req.body.token || req.query.token || req.headers['x-access-token'];
+  var TransactionSchema = Transaction.TransactionSchema;
+  var transaction = new TransactionSchema();
+  transaction.amount = amount;
+  transaction.transactionId = transactionId;
+  transaction.description = req.body.description;
+  console.log(transaction);
 
-  // decode token
-  if (token) {
 
-    // verifies secret and checks exp
-    jwt.verify(token, req.body.mobileNumber, function(err, decoded) {
-      if (err) {
-        return res.json({ success: false, message: 'Failed to authenticate token.' });
-      } else {
-        // if everything is good, save to request for use in other routes
-        req.decoded = decoded;
-        console.log('token successfully verified');
-
-              //make a bill--> make a transaction and update
-              var newBill = new Bill(req.body);
-
-              var newTransation = new Transaction();
-              newTransation.bills.push(newBill);
-              console.log(newTransation);
-              User.update({"mobileNumber":req.body.mobileNumber},{"$push":{"transactions":newTransation}},function(error,success)
-              {
-                if (success)
-               {
-                 console.log('success');
-                  return res.json({ success: true, message: 'Bill added successfully' });
-                }
-                else {
-                  console.log('failed');
-                     return res.json({ success: false, message: 'Unable to add bill' });
-                }
-              });
-    }});
-
-  } else {
-
-    // if there is no token
-    // return an error
-    return res.status(403).send({
-        success: false,
-        message: 'No token provided.'
-    });
-
-  }
+  User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
+  {
+	if(err)	return err;
+	console.log('user ',isUserFriend);
+	
+	User.update({mobileNumber:userNumber,"friends.friendNumber" : friendNumber},
+		    {"$push":{"friends.$.transactions":transaction}},
+		    { "new": true, "upsert": true },
+		    function(err,data)
+	{
+		if(err)	return err;
+		console.log(data);
+		console.log(friendNumber);
+		User.update({mobileNumber:friendNumber,"friends.friendNumber" : userNumber},
+			    {"$push":{"friends.$.transactions":transaction}},
+			    { "new": true, "upsert": true },
+			    function(err,data)
+			{
+				if(err)	return err;
+				console.log('user updated');
+			});
+	});
+  });
 };
