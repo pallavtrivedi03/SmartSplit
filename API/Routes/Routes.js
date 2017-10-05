@@ -4,6 +4,7 @@ var express = require('express');
 module.exports = function(app) {
   var setupController = require('../Controllers/UserSetupController'),
   friendController = require('../Controllers/friendController'),
+  groupController = require('../Controllers/groupController'),
   transactionController = require('../Controllers/TransactionController');
   var apiRoutes =  express.Router();
 
@@ -33,4 +34,8 @@ module.exports = function(app) {
   // add a bill route
   app.route('/addABill')
     .post(transactionController.addABill);
+
+  // add a bill route
+  app.route('/addGroup')
+    .post(groupController.addGroup);
 };
