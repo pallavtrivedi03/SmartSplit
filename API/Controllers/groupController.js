@@ -1,8 +1,10 @@
 var Group = require('../Models/groups');
 var shortId = require('shortid');
 var User = require('../Models/user');
+var GroupId = require('../Models/groupId');
 var Group = require('../Models/groups');
-var Member = require('../Models/members');
+var Member = require('../Models/members')
+var async = require('async');
 
 module.exports.addGroup = function(req,res)
 {
@@ -19,44 +21,50 @@ module.exports.addGroup = function(req,res)
 	{
 		if(err)	return err;
 		console.log("inside");
-		
+		var GroupIdSchema = GroupId.GroupSchema;
 		var MemberSchema = Member.MemberSchema;
-	
-		for (var i = 0, len = memberArray.length; i < len; i++) 
-		{
-			var mem = memberArray[i];
-			console.log(mem);
+		async.each(memberArray,function(mem,callback)
+	  {
 			var member = new MemberSchema();
+			var groupIdObj = new GroupIdSchema();
+			groupIdObj.groupId = groupId;
 			member.memberPhone = mem.phone;
 			console.log(member);
-			Group.update({groupId:groupId},	
-				     {"$push":{"members":member}},
-				     { "new": true, "upsert": true },
-			      	     function (err, user) 
+			Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
 					{
-					if(err) return err;
-					var groupObj ={"groupId":groupId};
-				        User.update({mobileNumber:member.memberPhone},
-			      			{ "$push": { "groupIds":groupObj  } },
-			      			{ "new": true, "upsert": true },
-			      			function (err, user) 
-						{
-							if(err)  return err;
-							console.log('saved');
-						});
+							if(err) return err;
+							User.update({mobileNumber:member.memberPhone}, { "$push": { "groupIds":groupIdObj }},{ "new": true, "upsert": true },function (err, user)
+							{
+								if(err)  return err;
+								console.log('saved');
+							});
 					});
-				     
-		}
-					User.update({mobileNumber:adminNumber},
-			      			{ "$push": { "groupIds": {groupId:groupId} } },
-			      			{ "new": true, "upsert": true },
-			      			function (err, user) 
+	  });
+
+		var groupIdObj = new GroupIdSchema();
+		User.update({mobileNumber:adminNumber}, { "$push": { "groupIds": groupIdObj } },{ "new": true, "upsert": true },function (err, user)
+			{
+				if(err)  return err;
+				var member = new MemberSchema();
+				member.memberPhone = adminNumber;
+				Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
 						{
-							if(err)  return err;
-							console.log('saved');
+								if(err) return err;
 						});
+				console.log('saved');
+			});
 	});
 
-	
 };
 
+module.exports.getCommonGroups = function(req,res)
+{
+	var userNumber = req.body.userNumber;
+	var friendNumber = req.body.friendNumber;
+
+	Group.find({"members.memberPhone":[userNumber,friendNumber]},function(err,data)
+	{
+		if(err) return err;
+		console.log(data);
+	});
+};

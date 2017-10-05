@@ -1,5 +1,6 @@
 var mongoose = require('mongoose');
 var Friend = require('./friend');
+var GroupId = require('./groupId');
 var Schema = mongoose.Schema;
 
 var User = new Schema({
@@ -22,7 +23,7 @@ password:{
 },
 friends:[{type:Friend}],
 groupIds:[
-{groupId:Number}
+{type:GroupId}
 ]
 });
 

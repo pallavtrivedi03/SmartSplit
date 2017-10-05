@@ -11,4 +11,3 @@ amount:Number
 });
 
 module.exports = mongoose.model('Group',Group);
-

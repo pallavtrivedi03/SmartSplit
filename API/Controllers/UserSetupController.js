@@ -7,7 +7,6 @@ mailController = require('./mailController');
 
 exports.registerUser = function(req, res) {
 
-    console.log(req.body);
     //find if user already exists
     User.findOne({
         mobileNumber: req.body.mobileNumber
@@ -47,21 +46,19 @@ exports.registerUser = function(req, res) {
 
 exports.signIn = function(req,res)
 {
-	let mobileNumber = req.body.mobileNumber;
-	let password     = req.body.password;
-	console.log(req.body);
-	User.findOne({mobileNumber:mobileNumber}, function(err,doUserExists)
+	let password = req.body.password;
+	let userName = req.body.name;
+	User.findOne({mobileNumber:req.body.mobileNumber}, function(err,doUserExists)
 	{
 	   if(err) return err;
 
    	   if(doUserExists)
 	      {
-		console.log("user "+doUserExists);
-		if(password == doUserExists.password && mobileNumber == doUserExists.mobileNumber)
+		if(password == doUserExists.password && userName == doUserExists.name)
 		{
 		   var expirationTime = {'expiresIn': '3h'};
 		   console.log(doUserExists);
-		   let token = jwt.sign(doUserExists.toObject(), doUserExists.mobileNumber,expirationTime);
+		   let token = jwt.sign(doUserExists.toObject(), req.body.mobileNumber,expirationTime);
 		   console.log(token);
 		   res.json(
 		   {
@@ -110,11 +107,3 @@ exports.forgotPassword = function(req,res)
       }
     });
 };
-
-exports.getUsers = function(req,res)
-{
-  User.find({},function(err,data)
-{
-  console.log(data);
-});
-}
