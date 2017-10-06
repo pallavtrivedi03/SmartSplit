@@ -16,47 +16,68 @@ module.exports.addGroup = function(req,res)
 	group.groupName = req.body.groupName;
 	group.groupId = groupId;
 	group.amount = req.body.amount;
-
-	group.save(function(err,group)
+	var memberArray = req.body.members;
+	var MemberSchema = Member.MemberSchema;
+	var GroupSchema = Group.GroupSchema;
+	var GroupIdSchema = GroupId.GroupIdSchema;
+	group.save(function(err,result)
 	{
 		if(err)	return err;
-		var GroupIdSchema = GroupId.GroupSchema;
-		var MemberSchema = Member.MemberSchema;
+		console.log("group added");
+		var count = 1;
+		var threshold = 1;
+		var length = memberArray.length;
+		async.each(memberArray,function(mem,callback)
+		{
+			var outerMember = mem;
+			async.each(memberArray,function(mem2,callback)
+			{
+				if(threshold < count)
+				{	
+					count++;
+					friendController.addFriend(outerMember.phone,mem2.phone,mem2.name,function(err,result)
+					{
+						if(err) return err;
+						console.log('added');
+					});
+					console.log("reached");	
+					return;
+				}
+				count++;
+				console.log(count);
+			});
+			count = 1;
+			threshold++;
+		});
 		async.each(memberArray,function(mem,callback)
 	  	{
 			var member = new MemberSchema();
 			var groupIdObj = new GroupIdSchema();
 			groupIdObj.groupId = groupId;
 			member.memberPhone = mem.phone;
-			User.findOne({mobileNumber:mem.phone},function(err,userExist)
-			{
-				if(err)	return err;
-				if(userExist)
-				{
-					User.findOne({mobileNumber:adminNumber,"friends.mobileNumber":mem.phone},function(err,isFriend)
-					{
-						if(err)  return err;
-						if(isFriend)
-						{
-							console.log("isFriend");
-						}
-						else friendController.addFriend(adminNumber,mem.phone,mem.name,function(err,result)
-						{
-							if(err)	return err;
-							console.log("friend Added");
-						});
-					});
-				}
-				else console.log("User doesn't exists");
-			});	
-			console.log(member);
 			Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
 			{
-				if(err) return err;
-				console.log('Saved');
+				if(err) 
+				{
+					return;
+				}
+				console.log("Added Member");
 			});
-	  	});
+		});
 	});
+};
+
+function addGroupMember(member,groupId,callback)
+{
+	Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
+			{
+				if(err) 
+				{
+					callback(err,null);
+					return;
+				}
+				callback(null,member);
+			});
 };
 
 module.exports.getCommonGroups = function(req,res)

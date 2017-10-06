@@ -4,34 +4,46 @@ var async = require('async');
 
 module.exports.addAFriend = function(req,res)
 {
-	console.log("hit");
 	var userNumber = req.body.userNumber;
 	var friendName = req.body.friendName;
 	var friendNumber = req.body.friendNumber;
-	console.log(userNumber);
-	addFriend(userNumber,friendNumber,friendName, function(err,result)
+	friend(userNumber,friendNumber,friendName, function(err,result)
 	{
 		if(err) return err;
-		res.send({"success":true});
+		res.end("Success");
 	});
 };
 
-function addFriend(userNumber,friendNumber,friendName,callback)
+function friend(userNumber,friendNumber,friendName,callback)
 {
+	console.log(userNumber,friendNumber);
 	User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
 	{
 		if(err)
 		{
 		 callback(err,null);
+		 return;
 		}
 		if(isUserFriend)
 		{
+		  console.log(isUserFriend);
 		  var FriendSchema = Friend.FriendSchema;
 		  let userFriend = new FriendSchema();
 		  userFriend.friendName = isUserFriend.name;
 		  userFriend.friendEmail = isUserFriend.email;
 	          userFriend.friendNumber = isUserFriend.mobileNumber;
-		  console.log(userFriend);
+
+		  var friends = isUserFriend.friends;
+		  for(var i=0; i<friends.length; i++)
+		  {
+			var friend = friends[i];
+			if(friend.friendNumber === userNumber)
+			{
+				console.log("Exists");
+				callback(null,"Exist");
+				return;
+			}
+		  }
 
 		  User.update({mobileNumber:userNumber},
 			      { "$push": { "friends": userFriend } },
@@ -39,22 +51,21 @@ function addFriend(userNumber,friendNumber,friendName,callback)
 			      function (err, user)
 		 {
 			if(err)	return err;
-			console.log('updated ',user);
+			console.log(user);
 			var friend = new FriendSchema();
 			User.findOne({mobileNumber:userNumber},function(err,userData)
 			{
 				if(err) return err;
-		 		console.log("userData ",userData);
 				friend.friendName = userData.name;
 	          		friend.friendEmail = userData.email;
 	                  	friend.friendNumber = userData.mobileNumber;
-				console.log(friend);
 		          User.update({mobileNumber:userFriend.friendNumber},{ "$push": { "friends": friend } },{ "new": true, "upsert": true },
 				function (err, user)
 				{
+				console.log(user)
 				if(err)	return err;
-			        console.log('updated ',user);
 				callback(null,user);
+				return;
 			  	});
 		        });
 		  });
@@ -62,4 +73,11 @@ function addFriend(userNumber,friendNumber,friendName,callback)
 	});
 };
 
-module.exports.addFriend = addFriend;
+module.exports.addFriend = function(userNumber,friendNumber,friendName,callback)
+{
+	friend(userNumber,friendNumber,friendName, function(err,result)
+	{
+		if(err) return err;
+		callback(null,result);
+	});
+};
