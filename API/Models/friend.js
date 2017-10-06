@@ -10,15 +10,12 @@ friendName:{
 },
 friendEmail:{
 	type:String,
-	required:true
+	required:false
 },
 friendNumber:{
 	type:String,
 	required:true
-},
-transactions:[{type:Transaction}],
-commonGroupIds:
-	[{groupIds: {type:String} }]
+}
 });
 
 module.exports = Friend;

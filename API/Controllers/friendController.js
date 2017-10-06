@@ -1,5 +1,6 @@
 var User = require('../Models/user');
 var Friend = require('../Models/friend');
+var async = require('async');
 
 module.exports.addAFriend = function(req,res)
 {
@@ -8,10 +9,21 @@ module.exports.addAFriend = function(req,res)
 	var friendName = req.body.friendName;
 	var friendNumber = req.body.friendNumber;
 	console.log(userNumber);
-
-	User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
+	addFriend(userNumber,friendNumber,friendName, function(err,result)
 	{
 		if(err) return err;
+		res.send({"success":true});
+	});
+};
+
+function addFriend(userNumber,friendNumber,friendName,callback)
+{
+	User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
+	{
+		if(err)
+		{
+		 callback(err,null);
+		}
 		if(isUserFriend)
 		{
 		  var FriendSchema = Friend.FriendSchema;
@@ -29,8 +41,8 @@ module.exports.addAFriend = function(req,res)
 			if(err)	return err;
 			console.log('updated ',user);
 			var friend = new FriendSchema();
-			  User.findOne({mobileNumber:userNumber},function(err,userData)
-			  {
+			User.findOne({mobileNumber:userNumber},function(err,userData)
+			{
 				if(err) return err;
 		 		console.log("userData ",userData);
 				friend.friendName = userData.name;
@@ -39,14 +51,15 @@ module.exports.addAFriend = function(req,res)
 				console.log(friend);
 		          User.update({mobileNumber:userFriend.friendNumber},{ "$push": { "friends": friend } },{ "new": true, "upsert": true },
 				function (err, user)
-			 {
+				{
 				if(err)	return err;
 			        console.log('updated ',user);
-			  });
-			  });
+				callback(null,user);
+			  	});
+		        });
 		  });
 		}
 	});
-
-
 };
+
+module.exports.addFriend = addFriend;
