@@ -19,7 +19,7 @@ module.exports.addGroup = function(req,res)
 	var memberArray = req.body.members;
 	var MemberSchema = Member.MemberSchema;
 	var GroupSchema = Group.GroupSchema;
-	var GroupIdSchema = GroupId.GroupIdSchema;
+	var GroupIdSchema = GroupId.GroupSchema;
 	group.save(function(err,result)
 	{
 		if(err)	return err;
@@ -33,14 +33,14 @@ module.exports.addGroup = function(req,res)
 			async.each(memberArray,function(mem2,callback)
 			{
 				if(threshold < count)
-				{	
+				{
 					count++;
 					friendController.addFriend(outerMember.phone,mem2.phone,mem2.name,function(err,result)
 					{
 						if(err) return err;
 						console.log('added');
 					});
-					console.log("reached");	
+					console.log("reached");
 					return;
 				}
 				count++;
@@ -57,7 +57,7 @@ module.exports.addGroup = function(req,res)
 			member.memberPhone = mem.phone;
 			Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
 			{
-				if(err) 
+				if(err)
 				{
 					return;
 				}
@@ -71,7 +71,7 @@ function addGroupMember(member,groupId,callback)
 {
 	Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
 			{
-				if(err) 
+				if(err)
 				{
 					callback(err,null);
 					return;

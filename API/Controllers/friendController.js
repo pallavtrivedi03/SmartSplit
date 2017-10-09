@@ -24,10 +24,11 @@ function friend(userNumber,friendNumber,friendName,callback)
 		 callback(err,null);
 		 return;
 		}
+
+		var FriendSchema = Friend.FriendSchema;
 		if(isUserFriend)
 		{
 		  console.log(isUserFriend);
-		  var FriendSchema = Friend.FriendSchema;
 		  let userFriend = new FriendSchema();
 		  userFriend.friendName = isUserFriend.name;
 		  userFriend.friendEmail = isUserFriend.email;
@@ -36,13 +37,13 @@ function friend(userNumber,friendNumber,friendName,callback)
 		  var friends = isUserFriend.friends;
 		  for(var i=0; i<friends.length; i++)
 		  {
-			var friend = friends[i];
-			if(friend.friendNumber === userNumber)
-			{
-				console.log("Exists");
-				callback(null,"Exist");
-				return;
-			}
+					var friend = friends[i];
+					if(friend.friendNumber === userNumber)
+					{
+							console.log("Exists");
+							callback(null,"Exist");
+							return;
+						}
 		  }
 
 		  User.update({mobileNumber:userNumber},
@@ -69,6 +70,22 @@ function friend(userNumber,friendNumber,friendName,callback)
 			  	});
 		        });
 		  });
+		}
+		else
+		{
+			var friend = new FriendSchema();
+			friend.friendName = friendName;
+			friend.friendNumber = friendNumber;
+			User.update({mobileNumber:userNumber},
+			      { "$push": { "friends": friend } },
+			      { "new": true, "upsert": true },
+			      function (err, user)
+		 {
+			 	if(err) return err;
+				console.log('Added user that doesnt exists');
+				callback(null,"Success");
+				return;
+		 });
 		}
 	});
 };
