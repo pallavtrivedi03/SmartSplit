@@ -1,6 +1,8 @@
+var mongoose = require('mongoose');
 var Group = require('../Models/groups');
 var shortId = require('shortid');
-var User = require('../Models/user');
+var Friend = require('../Models/friend');
+var User = mongoose.model('User');
 var GroupId = require('../Models/groupId');
 var Group = require('../Models/groups');
 var Member = require('../Models/members');
@@ -20,51 +22,94 @@ module.exports.addGroup = function(req,res)
 	var MemberSchema = Member.MemberSchema;
 	var GroupSchema = Group.GroupSchema;
 	var GroupIdSchema = GroupId.GroupSchema;
-	group.save(function(err,result)
+	console.log(memberArray);
+	for(var i=0;i<memberArray.length;i++)
+	{
+		group.members.push(memberArray[i]);
+	}
+	group.save(function(err,groupAdded)
 	{
 		if(err)	return err;
-		console.log("group added");
-		var count = 1;
-		var threshold = 1;
-		var length = memberArray.length;
-		async.each(memberArray,function(mem,callback)
-		{
-			var outerMember = mem;
-			async.each(memberArray,function(mem2,callback)
-			{
-				if(threshold < count)
-				{
-					count++;
-					friendController.addFriend(outerMember.phone,mem2.phone,mem2.name,function(err,result)
-					{
-						if(err) return err;
-						console.log('added');
-					});
-					console.log("reached");
-					return;
-				}
-				count++;
-				console.log(count);
-			});
-			count = 1;
-			threshold++;
-		});
-		async.each(memberArray,function(mem,callback)
-	  	{
-			var member = new MemberSchema();
-			var groupIdObj = new GroupIdSchema();
-			groupIdObj.groupId = groupId;
-			member.memberPhone = mem.phone;
-			Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
-			{
-				if(err)
-				{
-					return;
-				}
-				console.log("Added Member");
-			});
-		});
+		console.log("groupAdded");
 	});
+	async.each(memberArray,function(mem,callback)
+		{
+			console.log("inside");
+			User.findOne({mobileNumber:mem.friendNumber},function(err,doUserExist)
+			{
+				if(err)  return err;
+				console.log(doUserExist);
+				if(doUserExist)
+				{
+					var intersection = [];
+					var modifiedArray = [];
+					var friendArray = doUserExist.friends;
+					for(var k = 0;k<memberArray.length;k++)
+					{
+						modifiedArray.push(memberArray[k]);
+					}
+					for(var i=0; i<friendArray.length;i++)
+					{		
+						for(var j=0;j<memberArray.length;j++)
+						{
+							console.log(friendArray[i].friendNumber+" "+memberArray[j].friendNumber);
+							if(friendArray[i].friendNumber == memberArray[j].friendNumber)
+							{
+								intersection.push(memberArray[j]);
+								var hasElement = modifiedArray.indexOf(memberArray[j]);
+								console.log(hasElement);
+								if(hasElement >= 0)
+								{
+									modifiedArray.splice(hasElement,1);
+								}
+							}			
+						}
+					}
+						
+					User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":modifiedArray}}},
+						function(err,nonExistingUserMembersx)
+						{	
+							if(err)	return err;
+							User.update({mobileNumber:mem.friendNumber},
+							{"$pull":{"friends":{"friendNumber":mem.friendNumber}}},
+							function(err,pullUser)
+							{
+								if(err)	return err;
+							});
+						});
+				}
+				else
+				{
+					console.log("else");
+					var user = new User();
+					console.log(mem);
+					user.name = mem.friendName;
+					user.mobileNumber = mem.friendNumber;
+					user.isRegistered = false;
+					console.log(user);
+					user.save(function(error,userCreated)
+					{
+						if(error)	return error;
+						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":memberArray}}},
+						function(err,nonExistingUserMembersx)
+						{	
+							if(err)	return err;
+							console.log("Updated");
+							User.update({mobileNumber:mem.friendNumber},
+							{"$pull":{"friends":{"friendNumber":mem.friendNumber}}},
+							function(err,pullUser)
+							{
+								if(err)	return err;
+							 	console.log("Self Remove");
+							});
+							console.log("Added member");
+						});
+						console.log("Created");
+					});
+				}
+			});	
+		});
+	
 };
 
 function addGroupMember(member,groupId,callback)

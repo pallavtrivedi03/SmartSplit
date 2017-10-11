@@ -1,0 +1,80 @@
+group.save(function(err,result)
+	{
+		if(err)	return err;
+		console.log("group added");
+		var count = 1;
+		var threshold = 1;
+		var length = memberArray.length;
+		async.each(memberArray,function(mem,callback)
+		{
+			var number = mem.phone;
+			console.log("inside");
+			User.findOne({mobileNumber:number},function(err,doUserExist)
+			{
+				if(err)  return err;
+				console.log(doUserExist);
+				if(doUserExist)
+				{
+					
+				}
+				else
+				{
+					console.log("else");
+					var user = new User();
+					user.name = mem.name;
+					user.mobileNumber = mem.phone;
+					user.isRegistered = false;
+					user.save(function(err,result)
+					{
+						if(err)	return err;
+					
+						console.log("Added");
+					});
+				}
+			});
+		});
+
+		var FriendSchema = Friend.FriendSchema;
+		for(var i=0; i<length; i++)
+		{
+			var outerMember = memberArray[i];
+			var outerFriend = new FriendSchema();
+			outerFriend.friendName = outerMember.name;
+			outerFriend.friendNumber = outerMember.phone;
+			console.log("outer");
+			for(var j=i+1; j<length;j++)
+			{
+				console.log("inner");
+				var innerMember = memberArray[j];
+				var innerFriend = new FriendSchema();
+				innerFriend.friendName = innerMember.name;
+				innerFriend.friendNumber = innerMember.phone;
+				User.update({mobileNumber:outerMember.phone},
+					{ "$push": { "friends": innerFriend } },
+					{ "new": true, "upsert":true },
+					function (err, user)
+					{
+						if(err)	return err;
+						User.update({mobileNumber:innerMember.phone},
+						{ "$push": { "friends": outerFriend } },
+						{ "new": true, "upsert":true },
+						function (err, user)
+						{
+							if(err)	return err;
+							console.log("Added user");
+						});
+					});
+			}
+		}
+	});
+
+
+
+
+
+User.update({mobileNumber:number},{"$addToSet":{"friends":{"$each":memberArray}}},
+						function(err,nonExistingUserMembersx)
+						{	
+							if(err)	return err;
+							console.log("Added member");
+						});

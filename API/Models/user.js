@@ -11,7 +11,7 @@ name:{
 },
 email:{
 	type:String,
-	required:true
+	required:false
 },
 mobileNumber:{
 	type:String,
@@ -19,12 +19,13 @@ mobileNumber:{
 },
 password:{
 	type:String,
+	required:false
+},
+isRegistered:{
+	type:Boolean,
 	required:true
 },
-friends:[{type:Friend}],
-groupIds:[
-{type:GroupId}
-]
+friends:[{type:Friend}]
 });
 
 module.exports = mongoose.model('User', User);

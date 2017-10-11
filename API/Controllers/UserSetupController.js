@@ -15,11 +15,38 @@ exports.registerUser = function(req, res) {
         if (err) throw err;
 
         if (doesUserExists) {
-          res.json({ success: false, message: 'Number already registered with SmartSplit' });
+	  if(doesUserExists.isRegistered)
+	  {
+		res.json({ success: false, message: 'Number already registered with SmartSplit' });
+	  }
+	  else
+	  {
+		doesUserExists.password = req.body.password;
+		doesUserExists.isRegistered = true;
+		doesUserExists.email = req.body.email;
+		doesUserExists.save(function(err,registeredUser)
+		{
+			if(err) return err;
+			var expirationTime = {'expiresIn': '3h'};
+              		var token = jwt.sign(registeredUser.toObject(), req.body.mobileNumber,expirationTime);
+              		mailController.registrationMail(doesUserExists );
+              		// return the information including token as JSON
+              		res.json({
+                		success: true,
+                		message: 'Registered successfully',
+                		token: token
+             			 });
+		});
+	  }
+	  
+	  
+          
         }
         else if (!doesUserExists) {
 
           var newUser = new User(req.body);
+	  newUser.isRegistered = true;
+	  console.log(newUser);
           newUser.save(function(err, user) {
             if (err)
             {
