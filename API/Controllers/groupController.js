@@ -1,13 +1,15 @@
-var mongoose = require('mongoose');
-var Group = require('../Models/groups');
-var shortId = require('shortid');
-var Friend = require('../Models/friend');
-var User = mongoose.model('User');
-var GroupId = require('../Models/groupId');
-var Group = require('../Models/groups');
-var Member = require('../Models/members');
-var friendController = require('./friendController');
-var async = require('async');
+var _                = require('lodash');
+var shortId          = require('shortid');
+var async            = require('async');
+
+//Models 
+var mongoose         = require('mongoose');
+var User             = mongoose.model('User');
+var Group            = require('../Models/groups');
+var Friend           = require('../Models/friend');
+var GroupId          = require('../Models/groupId');
+var Group            = require('../Models/groups');
+var Member           = require('../Models/members');
 
 module.exports.addGroup = function(req,res)
 {
@@ -44,42 +46,32 @@ module.exports.addGroup = function(req,res)
 					var intersection = [];
 					var modifiedArray = [];
 					var friendArray = doUserExist.friends;
-					for(var k = 0;k<memberArray.length;k++)
+					// This for loop is to remove _id from friendArray
+					for(var i=0;i<friendArray.length;i++)
 					{
-						modifiedArray.push(memberArray[k]);
+					   intersection.push({friendName:friendArray[i].friendName,friendNumber:friendArray[i].friendNumber});
 					}
-					for(var i=0; i<friendArray.length;i++)
+					
+					// Gives friends which are not present in the array of user
+					var modifiedArray = _.differenceWith(memberArray,intersection,_.isEqual);
+					for(var i=0;i<modifiedArray.length;i++)
 					{		
-						for(var j=0;j<memberArray.length;j++)
+						if(modifiedArray[i].friendNumber == mem.friendNumber)
 						{
-							console.log(friendArray[i].friendNumber+" "+memberArray[j].friendNumber);
-							if(friendArray[i].friendNumber == memberArray[j].friendNumber)
-							{
-								intersection.push(memberArray[j]);
-								var hasElement = modifiedArray.indexOf(memberArray[j]);
-								console.log(hasElement);
-								if(hasElement >= 0)
-								{
-									modifiedArray.splice(hasElement,1);
-								}
-							}			
+							modifiedArray.splice(i,1);
 						}
 					}
-						
+					// Adds members in the friendsArray 
 					User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":modifiedArray}}},
 						function(err,nonExistingUserMembersx)
 						{	
 							if(err)	return err;
-							User.update({mobileNumber:mem.friendNumber},
-							{"$pull":{"friends":{"friendNumber":mem.friendNumber}}},
-							function(err,pullUser)
-							{
-								if(err)	return err;
-							});
+							console.log('Added');	
 						});
 				}
 				else
 				{
+					var updated = [];
 					console.log("else");
 					var user = new User();
 					console.log(mem);
@@ -87,42 +79,30 @@ module.exports.addGroup = function(req,res)
 					user.mobileNumber = mem.friendNumber;
 					user.isRegistered = false;
 					console.log(user);
+					for(var i=0;i<memberArray.length;i++)
+					{
+					   updated.push(memberArray[i]);
+					}
+					for(var i=0;i<updated.length;i++)
+					{
+						if(updated[i].friendNumber == mem.friendNumber)
+						{
+							updated.splice(i,1);
+						}
+					}
 					user.save(function(error,userCreated)
 					{
 						if(error)	return error;
-						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":memberArray}}},
+						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":updated}}},
 						function(err,nonExistingUserMembersx)
 						{	
 							if(err)	return err;
-							console.log("Updated");
-							User.update({mobileNumber:mem.friendNumber},
-							{"$pull":{"friends":{"friendNumber":mem.friendNumber}}},
-							function(err,pullUser)
-							{
-								if(err)	return err;
-							 	console.log("Self Remove");
-							});
-							console.log("Added member");
 						});
-						console.log("Created");
 					});
 				}
 			});	
 		});
 	
-};
-
-function addGroupMember(member,groupId,callback)
-{
-	Group.update({groupId:groupId}, {"$push":{"members":member}}, { "new": true, "upsert": true }, function (err, user)
-			{
-				if(err)
-				{
-					callback(err,null);
-					return;
-				}
-				callback(null,member);
-			});
 };
 
 module.exports.getCommonGroups = function(req,res)
