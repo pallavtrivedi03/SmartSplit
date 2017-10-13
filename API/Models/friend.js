@@ -1,5 +1,5 @@
 var mongoose = require('mongoose');
-var Transaction = require('./transaction');
+//var Transaction = require('./transaction');
 var Schema = mongoose.Schema;
 
 var Friend = new Schema({

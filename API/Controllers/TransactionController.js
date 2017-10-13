@@ -1,49 +1,126 @@
-'use strict';
+var mongoose  = require('mongoose');
+var User      = mongoose.model('User');
+var jwt       = require('jsonwebtoken');
+var mongoose  = require('mongoose');
+var Bill      = require('../Models/Bill');
+var Member           = require('../Models/members');
+var Group            = require('../Models/groups');
+var friendController = require('./friendController');
 
-var mongoose = require('mongoose');
-var Transaction = require('../Models/transaction');
-var User = mongoose.model('User');
-var shortid = require('shortid');
-
-exports.addABill = function(req,res)
+module.exports.addABill = function(req,res)
 {
-  console.log(req.body);
-  var transactionId = shortid.generate();
-  console.log(transactionId);
-  var userNumber = req.body.userNumber;
-  var friendNumber = req.body.friendNumber;
-  var friendName = req.body.friendName;
-  var amount  = req.body.amount;
+  if (req.headers["x-access-token"])
+   {
+       jwt.verify(req.headers["x-access-token"],req.body.createdBy,function(err,token)
+       {
+           if(err)
+           {
+               res.json({"success":false,"message":"Invalid auth token"});
+           }
+           else
+           {
+             console.log("authentication successful");
+             var newBill = Bill();
+             newBill.description = req.body.description;
+             newBill.amount = req.body.amount;
+             newBill.paidBy = req.body.paidBy;
+             newBill.splitMode = req.body.splitMode;
+             newBill.splitBetween = req.body.splitBetween;
+             newBill.createdBy = req.body.createdBy;    //This will be definetly a registerUser
+             newBill.timeStamp = Date.now();
+             newBill.groupId = req.body.groupId;
 
-  var TransactionSchema = Transaction.TransactionSchema;
-  var transaction = new TransactionSchema();
-  transaction.amount = amount;
-  transaction.transactionId = transactionId;
-  transaction.description = req.body.description;
-  console.log(transaction);
+
+            var tempGroup = new Group();
+            var membersArray = req.body.splitBetween;
+
+             for(var i=0;i<membersArray.length;i++)
+           	{
+           		tempGroup.members.push(membersArray[i]);
+           	}
+
+             var indexOfCreator = -1;
+             for(var j=0;j<tempGroup.members.length;j++)
+             {
+               if (tempGroup.members[j].memberPhone == req.body.createdBy)
+               {
+                 indexOfCreator = j;
+                 break;
+               }
+             }
+
+             if(indexOfCreator > -1)
+             {
+               tempGroup.members.splice(indexOfCreator,1);
+             }
+             else
+             {
+               console.log("creator hi nhi hai array me");
+                return;
+             }
+
+             //now check if each element in array is user & friend
+             if (membersArray.length > 0)
+             {
+               checkAndAddFriend(req.body.createdBy,tempGroup.members,0,function(err,reult)
+             {
+               if(err)
+               {
+                 console.log(err);
+               }
+               else {
+                 console.log("add bill here");
+                 newBill.save(function(err,success)
+               {
+                 if(err)
+                 {
+                   res.json({success:false,message:"Unable to save bill"});
+                 }
+                 else {
+                   res.json({success:true,message:"bill added successfully"});
+                 }
+               });
+               }
+             });
+             }
+
+    }
+
+});
+}
+else
+{
+  res.json({"success":false,"message":"Auth token required"});
+}
 
 
-  User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
+function checkAndAddFriend(creatorNumber,membersArray,counter,callback)
+{
+  if(counter == membersArray.length)
   {
-	if(err)	return err;
-	console.log('user ',isUserFriend);
-	
-	User.update({mobileNumber:userNumber,"friends.friendNumber" : friendNumber},
-		    {"$push":{"friends.$.transactions":transaction}},
-		    { "new": true, "upsert": true },
-		    function(err,data)
-	{
-		if(err)	return err;
-		console.log(data);
-		console.log(friendNumber);
-		User.update({mobileNumber:friendNumber,"friends.friendNumber" : userNumber},
-			    {"$push":{"friends.$.transactions":transaction}},
-			    { "new": true, "upsert": true },
-			    function(err,data)
-			{
-				if(err)	return err;
-				console.log('user updated');
-			});
-	});
+    callback(null,true);
+    return;
+  }
+  else {
+    friendController.addFriend(creatorNumber,membersArray[counter].memberPhone,membersArray[counter].memberName,function(err,success)
+  {
+    if (err) {
+      callback(false,null);
+    }
+    else {
+      checkAndAddFriend(creatorNumber,membersArray,counter+1,function(err,result)
+    {
+      if (err) {
+        callback(false,null);
+        return;
+      }
+      else {
+        callback(null,true);
+        return;
+      }
+    });
+    }
   });
-};
+  }
+}
+}

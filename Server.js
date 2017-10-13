@@ -3,7 +3,7 @@ var app = express();
 var port = 3000;
 
 var mongoose = require('mongoose'),
-Transaction = require('./API/Models/transaction'),
+//Transaction = require('./API/Models/transaction'),
 User = require('./API/Models/user'), //created model loading here
 
 

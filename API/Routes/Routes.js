@@ -32,10 +32,6 @@ module.exports = function(app) {
     .post(friendController.addAFriend);
 
   // add a bill route
-  app.route('/addABill')
-    .post(transactionController.addABill);
-
-  // add a bill route
   app.route('/addGroup')
     .post(groupController.addGroup);
 

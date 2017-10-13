@@ -7,7 +7,7 @@ module.exports.addAFriend = function(req,res)
 {
 	var userNumber = req.body.userNumber;
 	var friendName = req.body.friendName;
-	var friendNumber = req.body.mobileNumber;	
+	var friendNumber = req.body.mobileNumber;
 	friend(userNumber,friendNumber,friendName, function(err,result)
 	{
 		if(err) return err;
@@ -18,7 +18,7 @@ module.exports.addAFriend = function(req,res)
 function friend(userNumber,friendNumber,friendName,callback)
 {
 	console.log(userNumber,friendNumber);
-	
+
 	User.findOne({mobileNumber:friendNumber}, function(err,isUserFriend)
 	{
 		if(err)
@@ -28,27 +28,27 @@ function friend(userNumber,friendNumber,friendName,callback)
 		}
 
 		var FriendSchema = Friend.FriendSchema;
-		if(isUserFriend)
+		if(isUserFriend)  //does user exists in User DB
 		{
 		  console.log("user friend ",isUserFriend);
 		  let userFriend = new FriendSchema();
 		  userFriend.friendName = isUserFriend.name;
 		  userFriend.friendEmail = isUserFriend.email;
 	          userFriend.friendNumber = isUserFriend.mobileNumber;
-	
+
 		  var friends = isUserFriend.friends;
 		  for(var i=0; i<friends.length; i++)
 		  {
 			var friend = friends[i];
-			if(friend.friendNumber === userNumber)
+			if(friend.friendNumber === userNumber) //Does admin(request maker) exists in friend's friend list
 			{
 				console.log("Exists");
 				callback(null,"Exist");
-				return;
+				return;   //Because already friend
 			}
 		  }
 
-		  User.update({mobileNumber:userNumber},
+		  User.update({mobileNumber:userNumber},    //adding frind in admin's friend list
 			      { "$push": { "friends": userFriend } },
 			      { "new": true, "upsert": true },
 			      function (err, user)
@@ -56,7 +56,7 @@ function friend(userNumber,friendNumber,friendName,callback)
 			if(err)	return err;
 			console.log(user);
 			var friend = new FriendSchema();
-			User.findOne({mobileNumber:userNumber},function(err,userData)
+			User.findOne({mobileNumber:userNumber},function(err,userData)  //adding self in friend's friend list.
 			{
 				if(err) return err;
 				friend.friendName = userData.name;
@@ -73,9 +73,9 @@ function friend(userNumber,friendNumber,friendName,callback)
 		        });
 		  });
 		}
-		else
+		else   //friend does not exists in user DB
 		{
-			var userFriend = new User();
+			var userFriend = new User();   //adding friend as unregistered user
 			userFriend.name = friendName;
 			userFriend.mobileNumber = friendNumber;
 			userFriend.isRegistered = false;
@@ -86,18 +86,18 @@ function friend(userNumber,friendNumber,friendName,callback)
 				var friend = new FriendSchema();
 				friend.friendName = friendName;
 				friend.friendNumber = friendNumber;
-				User.update({mobileNumber:userNumber},
+				User.update({mobileNumber:userNumber},    //adding this newly created user in self friend list
 			      	{ "$push": { "friends": friend } },
 			      	{ "new": true, "upsert": true },
 			      	function (err, user)
 		 		{
 			 		if(err) return err;
 					User.findOne({mobileNumber:userNumber},function(err,user)
-					{		
+					{
 						var friendUser = new FriendSchema();
 						friendUser.friendName = user.name;
 						friendUser.friendNumber = user.mobileNumber;
-						User.update({mobileNumber:friendNumber},
+						User.update({mobileNumber:friendNumber},  //adding self in newly created user's friend list
 			      			{ "$push": { "friends": friendUser } },
 			      			{ "new": true, "upsert": true },
 			      			function (err, user)
@@ -117,7 +117,15 @@ module.exports.addFriend = function(userNumber,friendNumber,friendName,callback)
 {
 	friend(userNumber,friendNumber,friendName, function(err,result)
 	{
-		if(err) return err;
-		callback(null,result);
+		if(err)
+    {
+      console.log("check 1");
+      callback(err,null);
+    }
+    else {
+      console.log("check 2");
+        callback(null,result);
+    }
+
 	});
 };
