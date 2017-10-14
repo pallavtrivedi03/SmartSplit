@@ -1,11 +1,12 @@
-var mongoose  = require('mongoose');
-var User      = mongoose.model('User');
-var jwt       = require('jsonwebtoken');
-var mongoose  = require('mongoose');
-var Bill      = require('../Models/Bill');
+var mongoose         = require('mongoose');
+var User             = mongoose.model('User');
+var jwt              = require('jsonwebtoken');
+var mongoose         = require('mongoose');
+var Bill             = require('../Models/Bill');
 var Member           = require('../Models/members');
 var Group            = require('../Models/groups');
 var friendController = require('./friendController');
+var groupController  = require('./groupController');
 
 module.exports.addABill = function(req,res)
 {
@@ -60,7 +61,7 @@ module.exports.addABill = function(req,res)
              }
 
              //now check if each element in array is user & friend
-             if (membersArray.length > 0)
+             if (tempGroup.members.length > 0 && tempGroup.members.length == 1)   //only a friend
              {
                checkAndAddFriend(req.body.createdBy,tempGroup.members,0,function(err,reult)
              {
@@ -83,6 +84,46 @@ module.exports.addABill = function(req,res)
                }
              });
              }
+             else  //group
+             {
+               console.log("yaha aaya bhi ya nahi");
+               Group.findOne({groupId:req.body.groupId},function(err,group)
+             {
+               if(group)  //group found, just add the transaction
+               {
+                 console.log("sidhe hi add ho gya");
+                 newBill.save(function(err,success)
+               {
+                 if(err)
+                 {
+                   res.json({success:false,message:"Unable to save bill"});
+                 }
+                 else {
+                   res.json({success:true,message:"bill added successfully"});
+                 }
+               });
+               }
+               else //group not found
+               {
+                 console.log("ye bhi theek hua");
+                 groupController.addGroupForTransaction(req.body.createdBy,req.body.splitBetween,newBill.amount,req.body.groupId,"SS-Default",function(err,result)
+               {
+                 newBill.save(function(err,success)
+               {
+                 if(err)
+                 {
+                   res.json({success:false,message:"Unable to save bill"});
+                 }
+                 else {
+                   res.json({success:true,message:"bill added successfully"});
+                 }
+               });
+               });
+               }
+
+             });
+
+             }
 
     }
 
@@ -96,6 +137,7 @@ else
 
 function checkAndAddFriend(creatorNumber,membersArray,counter,callback)
 {
+  console.log("checkAndAddFriend called");
   if(counter == membersArray.length)
   {
     callback(null,true);

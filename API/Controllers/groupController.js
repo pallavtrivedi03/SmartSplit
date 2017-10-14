@@ -2,7 +2,7 @@ var _                = require('lodash');
 var shortId          = require('shortid');
 var async            = require('async');
 
-//Models 
+//Models
 var mongoose         = require('mongoose');
 var User             = mongoose.model('User');
 var Group            = require('../Models/groups');
@@ -15,12 +15,29 @@ module.exports.addGroup = function(req,res)
 {
 	var adminNumber = req.body.adminNumber;
 	var memberArray = req.body.members;
+	var amount = req.body.amount;
+	var groupName = req.body.groupName;
 	var groupId = shortId.generate();
+	group(adminNumber,memberArray,amount,groupId,groupName,function(err,result)
+{
+	if(err)
+	{
+		res.json({"success":false,"message":"Unable to add group"});
+	}
+	else {
+		res.json({"success":false,"message":"Group added successfully"});
+	}
+});
+
+};
+
+function group(adminNumber,memberArray,amount,groupId,groupName,callback)
+{
 	var group = new Group();
-	group.groupName = req.body.groupName;
-	group.groupId = groupId;
-	group.amount = req.body.amount;
-	var memberArray = req.body.members;
+		group.groupId = groupId;
+		group.groupName = groupName;
+	group.amount = amount;
+
 	var MemberSchema = Member.MemberSchema;
 	var GroupSchema = Group.GroupSchema;
 	var GroupIdSchema = GroupId.GroupSchema;
@@ -31,8 +48,15 @@ module.exports.addGroup = function(req,res)
 	}
 	group.save(function(err,groupAdded)
 	{
-		if(err)	return err;
-		console.log("groupAdded");
+		if(err)
+		{
+			callback(false,null);
+				return;
+		}
+		else {
+			callback(null,true);
+			return;
+		}
 	});
 	async.each(memberArray,function(mem,callback)
 		{
@@ -51,22 +75,27 @@ module.exports.addGroup = function(req,res)
 					{
 					   intersection.push({friendName:friendArray[i].friendName,friendNumber:friendArray[i].friendNumber});
 					}
-					
+
 					// Gives friends which are not present in the array of user
 					var modifiedArray = _.differenceWith(memberArray,intersection,_.isEqual);
 					for(var i=0;i<modifiedArray.length;i++)
-					{		
+					{
 						if(modifiedArray[i].friendNumber == mem.friendNumber)
 						{
 							modifiedArray.splice(i,1);
 						}
 					}
-					// Adds members in the friendsArray 
+					// Adds members in the friendsArray
 					User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":modifiedArray}}},
 						function(err,nonExistingUserMembersx)
-						{	
-							if(err)	return err;
-							console.log('Added');	
+						{
+							if(err)
+							{
+								callback(false,null);
+							}
+							else {
+								callback(null,true);
+							}
 						});
 				}
 				else
@@ -95,15 +124,22 @@ module.exports.addGroup = function(req,res)
 						if(error)	return error;
 						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":updated}}},
 						function(err,nonExistingUserMembersx)
-						{	
-							if(err)	return err;
+						{
+							if(err)
+							{
+								callback(false,null);
+							}
+							else {
+								callback(null,true);
+							}
 						});
 					});
 				}
-			});	
+			});
 		});
-	
-};
+}
+
+
 
 module.exports.getCommonGroups = function(req,res)
 {
@@ -114,5 +150,20 @@ module.exports.getCommonGroups = function(req,res)
 	{
 		if(err) return err;
 		console.log(data);
+	});
+};
+
+
+module.exports.addGroupForTransaction = function(createdBy,membersArray,amount,groupId,groupName,callback)
+{
+		group(createdBy,membersArray,amount,groupId,groupName,function(err,result)
+	{
+		if(err)
+		{
+			callback(false,null);
+		}
+		else {
+			callback(null,true);
+		}
 	});
 };
