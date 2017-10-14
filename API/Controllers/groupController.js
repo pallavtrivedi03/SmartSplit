@@ -8,7 +8,6 @@ var User             = mongoose.model('User');
 var Group            = require('../Models/groups');
 var Friend           = require('../Models/friend');
 var GroupId          = require('../Models/groupId');
-var Group            = require('../Models/groups');
 var Member           = require('../Models/members');
 
 module.exports.addGroup = function(req,res)
@@ -61,7 +60,7 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 	async.each(memberArray,function(mem,callback)
 		{
 			console.log("inside");
-			User.findOne({mobileNumber:mem.friendNumber},function(err,doUserExist)
+			User.findOne({mobileNumber:mem.memberPhone},function(err,doUserExist)
 			{
 				if(err)  return err;
 				console.log(doUserExist);
@@ -80,13 +79,13 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 					var modifiedArray = _.differenceWith(memberArray,intersection,_.isEqual);
 					for(var i=0;i<modifiedArray.length;i++)
 					{
-						if(modifiedArray[i].friendNumber == mem.friendNumber)
+						if(modifiedArray[i].friendNumber == mem.memberPhone)
 						{
 							modifiedArray.splice(i,1);
 						}
 					}
 					// Adds members in the friendsArray
-					User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":modifiedArray}}},
+					User.update({mobileNumber:mem.memberPhone},{"$addToSet":{"friends":{"$each":modifiedArray}}},
 						function(err,nonExistingUserMembersx)
 						{
 							if(err)
@@ -104,8 +103,8 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 					console.log("else");
 					var user = new User();
 					console.log(mem);
-					user.name = mem.friendName;
-					user.mobileNumber = mem.friendNumber;
+					user.name = mem.memberName;
+					user.mobileNumber = mem.memberPhone;
 					user.isRegistered = false;
 					console.log(user);
 					for(var i=0;i<memberArray.length;i++)
@@ -114,7 +113,7 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 					}
 					for(var i=0;i<updated.length;i++)
 					{
-						if(updated[i].friendNumber == mem.friendNumber)
+						if(updated[i].friendNumber == mem.memberPhone)
 						{
 							updated.splice(i,1);
 						}
@@ -124,10 +123,11 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 					{
 						if(error)
 						{
+							console.log("error is "+error);
 							console.log("save nhi hua");
 							return error;
 						}
-						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":updated}}},
+						User.update({mobileNumber:mem.memberPhone},{"$addToSet":{"friends":{"$each":updated}}},
 						function(err,nonExistingUserMembersx)
 						{
 							if(err)
