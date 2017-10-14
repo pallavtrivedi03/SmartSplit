@@ -119,9 +119,14 @@ function group(adminNumber,memberArray,amount,groupId,groupName,callback)
 							updated.splice(i,1);
 						}
 					}
+					console.log("updated length is "+updated.length);
 					user.save(function(error,userCreated)
 					{
-						if(error)	return error;
+						if(error)
+						{
+							console.log("save nhi hua");
+							return error;
+						}
 						User.update({mobileNumber:mem.friendNumber},{"$addToSet":{"friends":{"$each":updated}}},
 						function(err,nonExistingUserMembersx)
 						{
