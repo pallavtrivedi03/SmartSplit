@@ -4,15 +4,15 @@ var Schema = mongoose.Schema;
 
 var Friend = new Schema({
 
-friendName:{
+name:{
 	type:String,
 	required:true
 },
-friendEmail:{
+email:{
 	type:String,
 	required:false
 },
-friendNumber:{
+number:{
 	type:String,
 	required:true
 }

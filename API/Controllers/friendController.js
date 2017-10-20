@@ -6,7 +6,7 @@ var async = require('async');
 module.exports.addAFriend = function(req,res)
 {
 	var userNumber = req.body.userNumber;
-	var friendName = req.body.friendName;
+	var friendName = req.body.name;
 	var friendNumber = req.body.mobileNumber;
 	friend(userNumber,friendNumber,friendName, function(err,result)
 	{
@@ -40,7 +40,7 @@ function friend(userNumber,friendNumber,friendName,callback)
 		  for(var i=0; i<friends.length; i++)
 		  {
 			var friend = friends[i];
-			if(friend.friendNumber === userNumber) //Does admin(request maker) exists in friend's friend list
+			if(friend.number === userNumber) //Does admin(request maker) exists in friend's friend list
 			{
 				console.log("Exists");
 				callback(null,"Exist");
@@ -59,10 +59,10 @@ function friend(userNumber,friendNumber,friendName,callback)
 			User.findOne({mobileNumber:userNumber},function(err,userData)  //adding self in friend's friend list.
 			{
 				if(err) return err;
-				friend.friendName = userData.name;
-	          		friend.friendEmail = userData.email;
-	                  	friend.friendNumber = userData.mobileNumber;
-		          	User.update({mobileNumber:userFriend.friendNumber},{ "$push": { "friends": friend } },{ "new": true, "upsert": true },
+				friend.name = userData.name;
+	          		friend.email = userData.email;
+	                  	friend.number = userData.mobileNumber;
+		          	User.update({mobileNumber:userFriend.number},{ "$push": { "friends": friend } },{ "new": true, "upsert": true },
 					function (err, user)
 					{
 					console.log(user)
@@ -84,8 +84,8 @@ function friend(userNumber,friendNumber,friendName,callback)
 				if(err)	return err;
 				console.log("Added Friend");
 				var friend = new FriendSchema();
-				friend.friendName = friendName;
-				friend.friendNumber = friendNumber;
+				friend.name = friendName;
+				friend.number = friendNumber;
 				User.update({mobileNumber:userNumber},    //adding this newly created user in self friend list
 			      	{ "$push": { "friends": friend } },
 			      	{ "new": true, "upsert": true },
@@ -95,8 +95,8 @@ function friend(userNumber,friendNumber,friendName,callback)
 					User.findOne({mobileNumber:userNumber},function(err,user)
 					{
 						var friendUser = new FriendSchema();
-						friendUser.friendName = user.name;
-						friendUser.friendNumber = user.mobileNumber;
+						friendUser.name = user.name;
+						friendUser.number = user.mobileNumber;
 						User.update({mobileNumber:friendNumber},  //adding self in newly created user's friend list
 			      			{ "$push": { "friends": friendUser } },
 			      			{ "new": true, "upsert": true },
@@ -115,6 +115,7 @@ function friend(userNumber,friendNumber,friendName,callback)
 
 module.exports.addFriend = function(userNumber,friendNumber,friendName,callback)
 {
+	console.log(friendNumber);
 	friend(userNumber,friendNumber,friendName, function(err,result)
 	{
 		if(err)

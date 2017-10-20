@@ -5,7 +5,7 @@ module.exports = function(app) {
   var setupController = require('../Controllers/UserSetupController'),
   friendController = require('../Controllers/friendController'),
   groupController = require('../Controllers/groupController'),
-  transactionController = require('../Controllers/TransactionController');
+  transactionController = require('../Controllers/transactionController');
   var apiRoutes =  express.Router();
 
   app.get('/',function(req,res){
@@ -24,12 +24,16 @@ module.exports = function(app) {
      .post(setupController.forgotPassword);
 
   // add a bill route
-  app.route('/addABill')
-    .post(transactionController.addABill);
+  //app.route('/addABill')
+    //.post(transactionController.addABill);
 
   // add a bill route
   app.route('/addAFriend')
     .post(friendController.addAFriend);
+
+  // add a bill route
+  app.route('/addABill')
+    .post(transactionController.addBill);
 
   // add a bill route
   app.route('/addGroup')

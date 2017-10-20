@@ -3,10 +3,9 @@ var Schema = mongoose.Schema;
 
 var Member = new Schema(
 {
-memberName:String,
-amount1:Number,
-amount2:Number,
-memberPhone:Number
+name:String,
+amount:Number,
+number:String
 });
 
 module.exports = Member;

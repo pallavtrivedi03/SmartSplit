@@ -27,7 +27,7 @@ createdBy:{
 },
 timeStamp:{
   type:Date,
-  required:true
+  required:false
 },
 groupId:{
   type:String,

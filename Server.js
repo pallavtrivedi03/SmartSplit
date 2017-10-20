@@ -1,12 +1,13 @@
 var express = require('express');
 var config  = require('./config');
 var app     = express();
+var port = 3000;
 
 var mongoose = require('mongoose'),
-Transaction  = require('./API/Models/transaction'),
 User         = require('./API/Models/user'), //created model loading here
 bodyParser   = require('body-parser');
 
+console.log(config.dbUrl);
 // mongoose instance connection url connection
 mongoose.Promise = global.Promise;
 mongoose.connect(config.dbUrl);
